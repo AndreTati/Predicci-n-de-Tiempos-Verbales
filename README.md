@@ -23,3 +23,19 @@ El usuario podrá ingresar una oración y el modelo ya entrenado deberá identif
 Dicho modelo será implementado en PyTorch, documentando el proceso de selección del modelo, entrenamiento y testeo.
 
 La aplicación será desplegada en Streamlit Cloud pudiendo ser accedida por cualquier persona que lo requiera.
+
+## Estructura del proyecto
+- data/: Archivos de datos utilizados para entrenamiento y evaluación.
+- dev/: Notebooks y scripts para el desarrollo y experimentación.
+- prod/: Código preparado para el entorno de producción.
+
+## Uso
+1. Clonar el repositorio
+   
+   `git clone https://github.com/AndreTati/PrediccionTiemposVerbales.git`
+3. Instalar dependencias
+   
+   `pip install -r requirements.txt`
+5. Ejecutar app de streamlit
+   
+   `streamlit run prod\app.py`
