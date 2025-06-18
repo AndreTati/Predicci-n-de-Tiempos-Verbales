@@ -2,11 +2,12 @@ import torch
 from transformers import BertTokenizer, BertModel
 import spacy
 import pickle
+import os
 from model import VerbClassifier
 
 def load_model():
     # Cargar diccionarios de etiquetas
-    with open("label_dicts.pkl", "rb") as f:
+    with open("prod/label_dicts.pkl", "rb") as f:
         label_dicts = pickle.load(f)
 
     id2tense = label_dicts["tense"]
@@ -15,17 +16,17 @@ def load_model():
     id2number = label_dicts["number"]
 
     # Crear modelos
-    device = torch.device("cpu")
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     modelTime = VerbClassifier(768, len(id2tense))
     modelMood = VerbClassifier(768, len(id2mood))
     modelPerson = VerbClassifier(3072, len(id2person))
     modelNumber = VerbClassifier(768, len(id2number))
 
     # Cargar pesos
-    modelTime.load_state_dict(torch.load("modelTime.pth", map_location=device))
-    modelMood.load_state_dict(torch.load("modelMood.pth", map_location=device))
-    modelPerson.load_state_dict(torch.load("modelPerson.pth", map_location=device))
-    modelNumber.load_state_dict(torch.load("modelNumber.pth", map_location=device))
+    modelTime.load_state_dict(torch.load("prod/modelTime.pth", map_location=device))
+    modelMood.load_state_dict(torch.load("prod/modelMood.pth", map_location=device))
+    modelPerson.load_state_dict(torch.load("prod/modelPerson.pth", map_location=device))
+    modelNumber.load_state_dict(torch.load("prod/modelNumber.pth", map_location=device))
 
     # Modo evaluación
     modelTime.eval()
@@ -40,7 +41,7 @@ def load_model():
     bert_model.eval()
 
     # Cargar spaCy
-    
+
     nlp = spacy.load("es_core_news_md")
     return (modelTime, modelMood, modelPerson, modelNumber,
             id2tense, id2mood, id2person, id2number,
