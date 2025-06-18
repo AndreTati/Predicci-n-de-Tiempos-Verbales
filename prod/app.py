@@ -5,7 +5,7 @@ from utils import load_model, analizar_oracion
 
 modelTime, modelMood, modelPerson, modelNumber,id2tense, id2mood, id2person, id2number,tokenizer, bert_model, nlp = load_model()
 
-st.title("Predicción de Tiempos Verbales en Español")
+st.title("Predicción de Tiempos Verbales")
 oracion = st.text_input("Ingrese una oración en español:")
 
 if st.button("Analizar"):
