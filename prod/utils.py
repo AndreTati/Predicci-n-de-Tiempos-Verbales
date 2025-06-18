@@ -37,7 +37,7 @@ def load_model():
 
     # Tokenizador y modelo BERT
     tokenizer = BertTokenizer.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
-    bert_model = BertModel.from_pretrained("dccuchile/bert-base-spanish-wwm-cased", output_hidden_states=True)
+    bert_model = BertModel.from_pretrained("dccuchile/bert-base-spanish-wwm-cased", output_hidden_states=True, trust_remote_code=True)
     bert_model.eval()
 
     # Cargar spaCy
