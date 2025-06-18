@@ -38,8 +38,11 @@ def load_model():
     # Tokenizador y modelo BERT
     #tokenizer = BertTokenizer.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
     #bert_model = BertModel.from_pretrained("dccuchile/bert-base-spanish-wwm-cased", output_hidden_states=True, trust_remote_code=True)
-    tokenizer = BertTokenizer.from_pretrained("bert_model")
-    bert_model = BertModel.from_pretrained("bert_model", output_hidden_states=True)
+    repo_id = "tatiduran/bertmodel"
+    subfolder = "bert_model"  # si corresponde
+
+    tokenizer = BertTokenizer.from_pretrained(repo_id, subfolder=subfolder)
+    bert_model = BertModel.from_pretrained(repo_id, output_hidden_states=True, subfolder=subfolder)
     bert_model.eval()
 
     # Cargar spaCy
