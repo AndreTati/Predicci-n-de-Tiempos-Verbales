@@ -71,4 +71,13 @@ if st.session_state.seleccionado:
         labels_tm = [id2tense[i] for i in range(len(probs_tm))]
 
         logits_p = modelPerson(embPerson).detach().cpu()
-        probs_p = torch.softmax(logits_p, dim=1).nump
+        probs_p = torch.softmax(logits_p, dim=1).numpy()[0]
+        labels_p = [id2person[i] for i in range(len(probs_p))]
+
+        logits_n = modelNumber(embNumber).detach().cpu()
+        probs_n = torch.softmax(logits_n, dim=1).numpy()[0]
+        labels_n = [id2number[i] for i in range(len(probs_n))]
+
+        st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}))
+        st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}))
+        st.plotly_chart(px.bar(x=labels_n, y=probs_n, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}))
