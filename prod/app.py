@@ -43,7 +43,7 @@ if st.button("Analizar"):
                 embTenseMood = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
                 embPerson = get_verb_embedding(inputs, hidden_states, verbo, strategy="second_last", tokenizer=tokenizer)
                 embNumber = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
-                if emb is None:
+                if embTenseMood is None or embPerson is None or embNumber is None:
                     st.warning(f"No se pudo obtener el embedding de '{verbo}'")
                     continue
 
@@ -70,7 +70,7 @@ if st.button("Analizar"):
                 st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}))
                 st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}))
                 st.plotly_chart(px.bar(x=labels_n, y=probs_n, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}))
-                
+
         """resultados = analizar_oracion(oracion, nlp, modelTime, modelPerson, modelNumber, id2tense, id2person, id2number, tokenizer, bert_model)
         if not resultados:
             st.info("No se detectaron verbos o no se pudieron procesar.")

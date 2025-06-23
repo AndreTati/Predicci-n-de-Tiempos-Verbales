@@ -11,26 +11,26 @@ def load_model():
         label_dicts = pickle.load(f)
 
     id2tense = label_dicts["tense"]
-    id2mood = label_dicts["mood"]
+    #id2mood = label_dicts["mood"]
     id2person = label_dicts["person"]
     id2number = label_dicts["number"]
 
     # Crear modelos
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     modelTime = VerbClassifier(768, len(id2tense))
-    modelMood = VerbClassifier(768, len(id2mood))
+    #modelMood = VerbClassifier(768, len(id2mood))
     modelPerson = VerbClassifier(3072, len(id2person))
     modelNumber = VerbClassifier(768, len(id2number))
 
     # Cargar pesos
     modelTime.load_state_dict(torch.load("prod/modelTime.pth", map_location=device))
-    modelMood.load_state_dict(torch.load("prod/modelMood.pth", map_location=device))
+    #modelMood.load_state_dict(torch.load("prod/modelMood.pth", map_location=device))
     modelPerson.load_state_dict(torch.load("prod/modelPerson.pth", map_location=device))
     modelNumber.load_state_dict(torch.load("prod/modelNumber.pth", map_location=device))
 
     # Modo evaluación
     modelTime.eval()
-    modelMood.eval()
+    #modelMood.eval()
     modelPerson.eval()
     modelNumber.eval()
 
@@ -48,8 +48,8 @@ def load_model():
     # Cargar spaCy
 
     nlp = spacy.load("es_core_news_md")
-    return (modelTime, modelMood, modelPerson, modelNumber,
-            id2tense, id2mood, id2person, id2number,
+    return (modelTime, modelPerson, modelNumber,
+            id2tense, id2person, id2number,
             tokenizer, bert_model, nlp)
 
 def get_bert_embeddings(sentence, tokenizer, bert_model):
