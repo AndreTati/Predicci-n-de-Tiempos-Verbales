@@ -2,68 +2,73 @@ import streamlit as st
 import spacy
 import torch
 import plotly.express as px
-from model import VerbClassifier
 from utils import load_model, get_bert_embeddings, get_verb_embedding
 
 # Cargar modelos y diccionarios
 modelTime, modelPerson, modelNumber, id2tense, id2person, id2number, tokenizer, bert_model, nlp = load_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Título
+# Inicializar estados
+if "oracion" not in st.session_state:
+    st.session_state.oracion = ""
+if "verbos" not in st.session_state:
+    st.session_state.verbos = []
+if "verbo_seleccionado" not in st.session_state:
+    st.session_state.verbo_seleccionado = None
+
 st.title("Predicción de Tiempos Verbales")
 
-# Entrada
-oracion = st.text_input("Ingrese una oración en español:")
+# Entrada de texto
+oracion = st.text_input("Ingrese una oración en español:", value=st.session_state.oracion)
 
-# Limpiar sesión si cambia la oración
-if "prev_oracion" not in st.session_state:
-    st.session_state["prev_oracion"] = ""
+# Al cambiar la oración, reiniciar estados
+if oracion != st.session_state.oracion:
+    st.session_state.oracion = oracion
+    st.session_state.verbo_seleccionado = None
+    st.session_state.verbos = []
 
-if oracion != st.session_state["prev_oracion"]:
-    st.session_state["selected_verbo"] = None
-    st.session_state["selected_index"] = None
-    st.session_state["prev_oracion"] = oracion
-
-if st.button("Analizar") and oracion.strip() != "":
+# Analizar al hacer clic
+if st.button("Analizar"):
     doc = nlp(oracion)
     verbos = []
-
     for i, token in enumerate(doc):
         if token.pos_ == "VERB":
             if i > 0 and doc[i - 1].pos_ == "AUX":
-                verbos.append((doc[i - 1].text, doc[i - 1].i))  # Usar AUX
+                verbos.append((doc[i - 1].text, doc[i - 1].i))
             else:
                 verbos.append((token.text, token.i))
+    st.session_state.verbos = verbos
 
-    # Mostrar la oración como botones para los verbos
-    st.markdown("### Hacé clic sobre un verbo para analizarlo:")
-    cols = st.columns(len(doc))
-    for i, token in enumerate(doc):
-        token_text = token.text_with_ws
-        if any(i == v_i for (_, v_i) in verbos):
-            with cols[i]:
-                if st.button(token.text, key=f"verbo_{i}"):
-                    st.session_state["selected_verbo"] = token.text
-                    st.session_state["selected_index"] = i
+# Mostrar oración con botones de verbos
+if st.session_state.verbos:
+    st.markdown("#### Oración:")
+    tokens = list(nlp(oracion))
+    formatted = []
+    for token in tokens:
+        if (token.text, token.i) in st.session_state.verbos:
+            if st.button(f"🔍 {token.text}", key=f"{token.text}_{token.i}"):
+                st.session_state.verbo_seleccionado = (token.text, token.i)
+            formatted.append(f"<b style='color:blue'>{token.text_with_ws}</b>")
         else:
-            cols[i].markdown(token_text)
+            formatted.append(token.text_with_ws)
+    st.markdown("".join(formatted), unsafe_allow_html=True)
 
-# Mostrar análisis si hay verbo seleccionado
-if "selected_verbo" in st.session_state and st.session_state["selected_verbo"]:
-    verbo = st.session_state["selected_verbo"]
-    st.markdown(f"### Resultados para **{verbo}**")
+# Mostrar resultados si se seleccionó un verbo
+if st.session_state.verbo_seleccionado:
+    verbo, _ = st.session_state.verbo_seleccionado
+    inputs, hidden_states = get_bert_embeddings(st.session_state.oracion, tokenizer, bert_model)
 
-    inputs, hidden_states = get_bert_embeddings(oracion, tokenizer, bert_model)
     embTenseMood = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
     embPerson = get_verb_embedding(inputs, hidden_states, verbo, strategy="second_last", tokenizer=tokenizer)
     embNumber = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
 
-    if embTenseMood is not None and embPerson is not None and embNumber is not None:
+    if embTenseMood is None or embPerson is None or embNumber is None:
+        st.warning(f"No se pudo obtener el embedding de '{verbo}'")
+    else:
         embTenseMood = embTenseMood.unsqueeze(0).to(device)
         embPerson = embPerson.unsqueeze(0).to(device)
         embNumber = embNumber.unsqueeze(0).to(device)
 
-        # Predicciones
         logits_tm = modelTime(embTenseMood).detach().cpu()
         probs_tm = torch.softmax(logits_tm, dim=1).numpy()[0]
         labels_tm = [id2tense[i] for i in range(len(probs_tm))]
@@ -76,9 +81,7 @@ if "selected_verbo" in st.session_state and st.session_state["selected_verbo"]:
         probs_n = torch.softmax(logits_n, dim=1).numpy()[0]
         labels_n = [id2number[i] for i in range(len(probs_n))]
 
-        # Gráficos
+        st.markdown(f"#### Resultados para **{verbo}**")
         st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}))
         st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}))
         st.plotly_chart(px.bar(x=labels_n, y=probs_n, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}))
-    else:
-        st.warning(f"No se pudo obtener el embedding de '{verbo}'")
