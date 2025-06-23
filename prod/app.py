@@ -38,16 +38,19 @@ if st.button("Analizar"):
 if st.session_state.oracion and st.session_state.verbos:
     st.markdown("### Oración con verbos clickeables:")
     doc = nlp(st.session_state.oracion)
-    cols = st.columns(len(doc))
+    cols = st.columns([
+    1.5 if any(idx == token.i for _, idx in verbos) else 1
+    for token in doc
+    ])
 
     for i, token in enumerate(doc):
-        matched = [(v, idx) for v, idx in st.session_state.verbos if idx == i]
-        if matched:
-            v_text, _ = matched[0]
-            if cols[i].button(v_text, key=f"verbo_{i}"):
-                st.session_state.seleccionado = v_text
+        if any(idx == token.i for _, idx in verbos):
+            if cols[i].button(f"🔍 {token.text}", key=f"btn_{i}"):
+                verbo = token.text
+                # ⬅️ tu lógica de predicción acá (embedding, modelo, softmax, etc.)
         else:
-            cols[i].markdown(f"<span style='color:white'>{token.text}</span>", unsafe_allow_html=True)
+            cols[i].markdown(f"<span style='font-size: 16px'>{token.text}</span>", unsafe_allow_html=True)
+
 
 # Mostrar resultado del verbo seleccionado
 if st.session_state.seleccionado:
@@ -78,6 +81,6 @@ if st.session_state.seleccionado:
         probs_n = torch.softmax(logits_n, dim=1).numpy()[0]
         labels_n = [id2number[i] for i in range(len(probs_n))]
 
-        st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}))
-        st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}))
-        st.plotly_chart(px.bar(x=labels_n, y=probs_n, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}))
+        st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))
+        st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))
+        st.plotly_chart(px.bar(x=labels_n, y=probs_n, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))
