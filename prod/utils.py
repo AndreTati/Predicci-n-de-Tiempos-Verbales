@@ -19,7 +19,7 @@ def load_model():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     modelTime = VerbClassifier(768, len(id2tense))
     #modelMood = VerbClassifier(768, len(id2mood))
-    modelPerson = VerbClassifier(3072, len(id2person))
+    modelPerson = VerbClassifier(768, len(id2person))
     modelNumber = VerbClassifier(768, len(id2number))
 
     # Cargar pesos
