@@ -39,7 +39,7 @@ if st.button("Analizar"):
 
 # Mostrar oración con verbos clickeables
 if st.session_state.oracion and st.session_state.verbos:
-    st.markdown("### Oración con verbos clickeables:")
+    st.markdown("#### Seleccione el verbo que desea analizar:")
     doc = nlp(st.session_state.oracion)
     cols = st.columns([
         1.5 if any(idx == token.i for _, idx in st.session_state.verbos) else 1
@@ -56,7 +56,7 @@ if st.session_state.oracion and st.session_state.verbos:
 # Mostrar resultado del verbo seleccionado
 if st.session_state.seleccionado:
     verbo = st.session_state.seleccionado
-    st.markdown(f"### 🔹 Verbo: {verbo}")
+    st.markdown(f"#### 🔹 Verbo: {verbo}")
     inputs, hidden_states = get_bert_embeddings(st.session_state.oracion, tokenizer, bert_model)
 
     embTenseMood = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
