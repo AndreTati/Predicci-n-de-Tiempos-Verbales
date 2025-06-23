@@ -103,7 +103,7 @@ if st.session_state.seleccionado:
         col1, col2, col3 = st.columns(3)
         with col1:
             st.plotly_chart(
-                px.bar(x=labels_tm, y=probs_tm, text_auto=True, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True),
+                px.bar(x=labels_tm, y=probs_tm, text_auto=True, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}),
                 use_container_width=True
             )
         with col2:
