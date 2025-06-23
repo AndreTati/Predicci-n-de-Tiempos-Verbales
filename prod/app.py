@@ -4,7 +4,8 @@ import torch
 import plotly.express as px
 from utils import load_model, get_bert_embeddings, get_verb_embedding, descripcion_tiempos, descripcion_modos, descripcion_personas, descripcion_numeros
 
-
+# Cambiar ancho de página
+st.set_page_config(layout="wide")
 
 # Cargar modelos
 modelTime, modelPerson, modelNumber, id2tense, id2person, id2number, tokenizer, bert_model, nlp = load_model()
@@ -94,6 +95,6 @@ if st.session_state.seleccionado:
         st.write(f"• Persona: {descripcion_personas.get(int(pred_persona), pred_persona)}")
         st.write(f"• Número: {descripcion_numeros.get(pred_numero, pred_numero)}")
 
-        st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))
-        st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))
-        st.plotly_chart(px.bar(x=labels_n, y=probs_n, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))
+        st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, text_auto=True, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}))
+        st.plotly_chart(px.bar(x=labels_p, y=probs_p, text_auto=True, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}))
+        st.plotly_chart(px.bar(x=labels_n, y=probs_n, text_auto=True, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}))
