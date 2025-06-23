@@ -1,8 +1,10 @@
-import streamlit as st
+import streamlit as st 
 import spacy
 import torch
 import plotly.express as px
-from utils import load_model, get_bert_embeddings, get_verb_embedding
+from utils import load_model, get_bert_embeddings, get_verb_embedding, descripcion_tiempos, descripcion_modos, descripcion_personas, descripcion_numeros
+
+
 
 # Cargar modelos
 modelTime, modelPerson, modelNumber, id2tense, id2person, id2number, tokenizer, bert_model, nlp = load_model()
@@ -39,23 +41,21 @@ if st.session_state.oracion and st.session_state.verbos:
     st.markdown("### Oración con verbos clickeables:")
     doc = nlp(st.session_state.oracion)
     cols = st.columns([
-    1.5 if any(idx == token.i for _, idx in verbos) else 1
-    for token in doc
+        1.5 if any(idx == token.i for _, idx in st.session_state.verbos) else 1
+        for token in doc
     ])
 
     for i, token in enumerate(doc):
-        if any(idx == token.i for _, idx in verbos):
+        if any(idx == token.i for _, idx in st.session_state.verbos):
             if cols[i].button(f"🔍 {token.text}", key=f"btn_{i}"):
-                verbo = token.text
-                # ⬅️ tu lógica de predicción acá (embedding, modelo, softmax, etc.)
+                st.session_state.seleccionado = token.text
         else:
             cols[i].markdown(f"<span style='font-size: 16px'>{token.text}</span>", unsafe_allow_html=True)
-
 
 # Mostrar resultado del verbo seleccionado
 if st.session_state.seleccionado:
     verbo = st.session_state.seleccionado
-    st.markdown(f"### Resultados para **{verbo}**")
+    st.markdown(f"### 🔹 Verbo: {verbo}")
     inputs, hidden_states = get_bert_embeddings(st.session_state.oracion, tokenizer, bert_model)
 
     embTenseMood = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
@@ -72,6 +72,7 @@ if st.session_state.seleccionado:
         logits_tm = modelTime(embTenseMood).detach().cpu()
         probs_tm = torch.softmax(logits_tm, dim=1).numpy()[0]
         labels_tm = [id2tense[i] for i in range(len(probs_tm))]
+        tiempo, modo= labels_tm[probs_tm.argmax()].split("_")
 
         logits_p = modelPerson(embPerson).detach().cpu()
         probs_p = torch.softmax(logits_p, dim=1).numpy()[0]
@@ -80,6 +81,18 @@ if st.session_state.seleccionado:
         logits_n = modelNumber(embNumber).detach().cpu()
         probs_n = torch.softmax(logits_n, dim=1).numpy()[0]
         labels_n = [id2number[i] for i in range(len(probs_n))]
+
+        # Predicciones principales
+        pred_tiempo = tiempo
+        pred_modo = modo
+        pred_persona = labels_p[probs_p.argmax()]
+        pred_numero = labels_n[probs_n.argmax()]
+
+        # Mostrar etiquetas humanas
+        st.write(f"• Tiempo: {descripcion_tiempos.get(pred_tiempo, pred_tiempo)}")
+        st.write(f"• Modo: {descripcion_modos.get(pred_modo, pred_modo)}")
+        st.write(f"• Persona: {descripcion_personas.get(int(pred_persona), pred_persona)}")
+        st.write(f"• Número: {descripcion_numeros.get(pred_numero, pred_numero)}")
 
         st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))
         st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}, text_auto=True))

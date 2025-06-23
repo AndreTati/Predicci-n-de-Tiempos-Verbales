@@ -78,8 +78,32 @@ def get_verb_embedding(inputs, hidden_states, verb, strategy, tokenizer):
     else:
         return None
 
+# Diccionarios descriptivos
+descripcion_tiempos = {
+    "Pres": "Presente",
+    "Past": "Pasado",
+    "Imp": "Imperfecto",
+    "Fut": "Futuro"
+}
+
+descripcion_modos = {
+    "Ind": "Indicativo",
+    "Sub": "Subjuntivo"
+}
+
+descripcion_personas = {
+    1: "Primera",
+    2: "Segunda",
+    3: "Tercera"
+}
+
+descripcion_numeros = {
+    "Sing": "Singular",
+    "Plur": "Plural"
+}
 
 def analizar_oracion(oracion, nlp, modelTime, modelPerson, modelNumber, id2tense, id2person, id2number, tokenizer, bert_model):
+
     doc = nlp(oracion)
     verbos = [(token.text, token.i) for token in doc if token.pos_ == "VERB"]
     resultados = []
