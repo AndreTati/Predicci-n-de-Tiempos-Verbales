@@ -79,25 +79,26 @@ def get_verb_embedding(inputs, hidden_states, verb, strategy, tokenizer):
         return None
 
 
-def analizar_oracion(oracion, nlp, modelTime, modelMood, modelPerson, modelNumber, id2tense, id2mood, id2person, id2number, tokenizer, bert_model):
+def analizar_oracion(oracion, nlp, modelTime, modelPerson, modelNumber, id2tense, id2person, id2number, tokenizer, bert_model):
     doc = nlp(oracion)
     verbos = [(token.text, token.i) for token in doc if token.pos_ == "VERB"]
     resultados = []
 
     inputs, hidden_states = get_bert_embeddings(oracion, tokenizer, bert_model)
     for verbo, _ in verbos:
-        emb_time = get_verb_embedding(inputs, hidden_states, verbo, "second_last", tokenizer)
-        emb_mood = get_verb_embedding(inputs, hidden_states, verbo, "sum_last4", tokenizer)
-        emb_person = get_verb_embedding(inputs, hidden_states, verbo, "concat_last4", tokenizer)
+        emb_time = get_verb_embedding(inputs, hidden_states, verbo, "sum_all", tokenizer)
+        #emb_mood = get_verb_embedding(inputs, hidden_states, verbo, "sum_last4", tokenizer)
+        emb_person = get_verb_embedding(inputs, hidden_states, verbo, "second_last", tokenizer)
         emb_number = get_verb_embedding(inputs, hidden_states, verbo, "sum_all", tokenizer)
 
-        if None in [emb_time, emb_mood, emb_person, emb_number]:
+        if None in [emb_time, emb_person, emb_number]:
             continue
 
         tiempo = id2tense[modelTime(emb_time.unsqueeze(0)).argmax(dim=1).item()]
-        modo = id2mood[modelMood(emb_mood.unsqueeze(0)).argmax(dim=1).item()]
+        #modo = id2mood[modelMood(emb_mood.unsqueeze(0)).argmax(dim=1).item()]
         persona = id2person[modelPerson(emb_person.unsqueeze(0)).argmax(dim=1).item()]
         numero = id2number[modelNumber(emb_number.unsqueeze(0)).argmax(dim=1).item()]
+        tiempo, modo = tiempo.split("_")
 
         resultados.append({
             "verbo": verbo,
