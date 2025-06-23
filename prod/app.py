@@ -4,31 +4,26 @@ import torch
 import plotly.express as px
 from utils import load_model, get_bert_embeddings, get_verb_embedding
 
-# Cargar modelos y diccionarios
+# Cargar modelos
 modelTime, modelPerson, modelNumber, id2tense, id2person, id2number, tokenizer, bert_model, nlp = load_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Inicializar estados
+st.title("Predicción de Tiempos Verbales")
+
+# Mantener estado
 if "oracion" not in st.session_state:
     st.session_state.oracion = ""
 if "verbos" not in st.session_state:
     st.session_state.verbos = []
-if "verbo_seleccionado" not in st.session_state:
-    st.session_state.verbo_seleccionado = None
+if "seleccionado" not in st.session_state:
+    st.session_state.seleccionado = None
 
-st.title("Predicción de Tiempos Verbales")
-
-# Entrada de texto
+# Entrada
 oracion = st.text_input("Ingrese una oración en español:", value=st.session_state.oracion)
 
-# Al cambiar la oración, reiniciar estados
-if oracion != st.session_state.oracion:
-    st.session_state.oracion = oracion
-    st.session_state.verbo_seleccionado = None
-    st.session_state.verbos = []
-
-# Analizar al hacer clic
 if st.button("Analizar"):
+    st.session_state.oracion = oracion
+    st.session_state.seleccionado = None
     doc = nlp(oracion)
     verbos = []
     for i, token in enumerate(doc):
@@ -39,23 +34,25 @@ if st.button("Analizar"):
                 verbos.append((token.text, token.i))
     st.session_state.verbos = verbos
 
-# Mostrar oración con botones de verbos
-if st.session_state.verbos:
-    st.markdown("#### Oración:")
-    tokens = list(nlp(oracion))
-    formatted = []
-    for token in tokens:
-        if (token.text, token.i) in st.session_state.verbos:
-            if st.button(f"🔍 {token.text}", key=f"{token.text}_{token.i}"):
-                st.session_state.verbo_seleccionado = (token.text, token.i)
-            formatted.append(f"<b style='color:blue'>{token.text_with_ws}</b>")
-        else:
-            formatted.append(token.text_with_ws)
-    st.markdown("".join(formatted), unsafe_allow_html=True)
+# Mostrar oración con verbos clickeables
+if st.session_state.oracion and st.session_state.verbos:
+    st.markdown("### Oración con verbos clickeables:")
+    doc = nlp(st.session_state.oracion)
+    cols = st.columns(len(doc))
 
-# Mostrar resultados si se seleccionó un verbo
-if st.session_state.verbo_seleccionado:
-    verbo, _ = st.session_state.verbo_seleccionado
+    for i, token in enumerate(doc):
+        matched = [(v, idx) for v, idx in st.session_state.verbos if idx == i]
+        if matched:
+            v_text, _ = matched[0]
+            if cols[i].button(v_text, key=f"verbo_{i}"):
+                st.session_state.seleccionado = v_text
+        else:
+            cols[i].markdown(f"<span style='color:white'>{token.text}</span>", unsafe_allow_html=True)
+
+# Mostrar resultado del verbo seleccionado
+if st.session_state.seleccionado:
+    verbo = st.session_state.seleccionado
+    st.markdown(f"### Resultados para **{verbo}**")
     inputs, hidden_states = get_bert_embeddings(st.session_state.oracion, tokenizer, bert_model)
 
     embTenseMood = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
@@ -74,14 +71,4 @@ if st.session_state.verbo_seleccionado:
         labels_tm = [id2tense[i] for i in range(len(probs_tm))]
 
         logits_p = modelPerson(embPerson).detach().cpu()
-        probs_p = torch.softmax(logits_p, dim=1).numpy()[0]
-        labels_p = [id2person[i] for i in range(len(probs_p))]
-
-        logits_n = modelNumber(embNumber).detach().cpu()
-        probs_n = torch.softmax(logits_n, dim=1).numpy()[0]
-        labels_n = [id2number[i] for i in range(len(probs_n))]
-
-        st.markdown(f"#### Resultados para **{verbo}**")
-        st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}))
-        st.plotly_chart(px.bar(x=labels_p, y=probs_p, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}))
-        st.plotly_chart(px.bar(x=labels_n, y=probs_n, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}))
+        probs_p = torch.softmax(logits_p, dim=1).nump
