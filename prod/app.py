@@ -103,16 +103,16 @@ if st.session_state.seleccionado:
         col1, col2, col3 = st.columns(3)
         with col1:
             st.plotly_chart(
-                px.bar(x=labels_tm, y=probs_tm, text_auto=True, title="Tiempo - Modo", color='blue', labels={"x": "Etiqueta", "y": "Probabilidad"}),
+                px.bar(x=labels_tm, y=probs_tm, text_auto=True, title="Tiempo - Modo", color_discrete_sequence=["#eb984e"], labels={"x": "Etiqueta", "y": "Probabilidad"}),
                 use_container_width=True
             )
         with col2:
             st.plotly_chart(
-                px.bar(x=labels_p, y=probs_p, text_auto=True, title="Persona", color='green', labels={"x": "Etiqueta", "y": "Probabilidad"}),
+                px.bar(x=labels_p, y=probs_p, text_auto=True, title="Persona", color_discrete_sequence=["#73c6b6"], labels={"x": "Etiqueta", "y": "Probabilidad"}),
                 use_container_width=True
             )
         with col3:
             st.plotly_chart(
-                px.bar(x=labels_n, y=probs_n, text_auto=True, title="Número", color='orange', labels={"x": "Etiqueta", "y": "Probabilidad"}),
+                px.bar(x=labels_n, y=probs_n, text_auto=True, title="Número", color_discrete_sequence=["#7fb3d5"], labels={"x": "Etiqueta", "y": "Probabilidad"}),
                 use_container_width=True
             )
