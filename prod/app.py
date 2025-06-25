@@ -2,7 +2,7 @@ import streamlit as st
 import spacy
 import torch
 import plotly.express as px
-from utils import load_model, get_bert_embeddings, get_verb_embedding, descripcion_tiempos, descripcion_modos, descripcion_personas, descripcion_numeros
+from utils import load_model, get_bert_embeddings, get_verb_embedding,detectar_verbos_spacy, analizar_verbo, descripcion_tiempos, descripcion_modos, descripcion_personas, descripcion_numeros
 
 # Cambiar ancho de página
 description = "Predicción de Tiempos Verbales"
@@ -28,15 +28,8 @@ oracion = st.text_input("Ingrese una oración en español:", value=st.session_st
 if st.button("Analizar"):
     st.session_state.oracion = oracion
     st.session_state.seleccionado = None
-    doc = nlp(oracion)
-    verbos = []
-    for i, token in enumerate(doc):
-        if token.pos_ == "VERB":
-            if i > 0 and doc[i - 1].pos_ == "AUX":
-                verbos.append((doc[i - 1].text, doc[i - 1].i))
-            else:
-                verbos.append((token.text, token.i))
-    st.session_state.verbos = verbos
+    
+    st.session_state.verbos = detectar_verbos_spacy(nlp, oracion)
 
 # Mostrar oración con verbos clickeables
 if st.session_state.oracion and st.session_state.verbos:
@@ -58,37 +51,11 @@ if st.session_state.oracion and st.session_state.verbos:
 if st.session_state.seleccionado:
     verbo = st.session_state.seleccionado
     st.markdown(f"#### 🔹 Verbo: {verbo}")
-    inputs, hidden_states = get_bert_embeddings(st.session_state.oracion, tokenizer, bert_model)
-
-    embTenseMood = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
-    embPerson = get_verb_embedding(inputs, hidden_states, verbo, strategy="second_last", tokenizer=tokenizer)
-    embNumber = get_verb_embedding(inputs, hidden_states, verbo, strategy="sum_all", tokenizer=tokenizer)
-
-    if embTenseMood is None or embPerson is None or embNumber is None:
+    pred_tiempo, pred_modo, pred_persona, pred_numero, probs_tm, labels_tm, probs_p, labels_p, probs_n, labels_n=analizar_verbo(
+        st.session_state.oracion, tokenizer, bert_model, modelTime, modelPerson, modelNumber,
+        id2tense, id2person, id2number, verbo, device)
+    if pred_tiempo is None or pred_modo is None or pred_persona is None or pred_numero is None:
         st.warning(f"No se pudo obtener el embedding de '{verbo}'")
-    else:
-        embTenseMood = embTenseMood.unsqueeze(0).to(device)
-        embPerson = embPerson.unsqueeze(0).to(device)
-        embNumber = embNumber.unsqueeze(0).to(device)
-
-        logits_tm = modelTime(embTenseMood).detach().cpu()
-        probs_tm = torch.softmax(logits_tm, dim=1).numpy()[0]
-        labels_tm = [id2tense[i] for i in range(len(probs_tm))]
-        tiempo, modo= labels_tm[probs_tm.argmax()].split("_")
-
-        logits_p = modelPerson(embPerson).detach().cpu()
-        probs_p = torch.softmax(logits_p, dim=1).numpy()[0]
-        labels_p = [id2person[i] for i in range(len(probs_p))]
-
-        logits_n = modelNumber(embNumber).detach().cpu()
-        probs_n = torch.softmax(logits_n, dim=1).numpy()[0]
-        labels_n = [id2number[i] for i in range(len(probs_n))]
-
-        # Predicciones principales
-        pred_tiempo = tiempo
-        pred_modo = modo
-        pred_persona = labels_p[probs_p.argmax()]
-        pred_numero = labels_n[probs_n.argmax()]
 
         # Mostrar etiquetas humanas
         st.write(f"• Tiempo: {descripcion_tiempos.get(pred_tiempo, pred_tiempo)}")
