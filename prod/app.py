@@ -95,11 +95,7 @@ if st.session_state.seleccionado:
         st.write(f"• Modo: {descripcion_modos.get(pred_modo, pred_modo)}")
         st.write(f"• Persona: {descripcion_personas.get(int(pred_persona), pred_persona)}")
         st.write(f"• Número: {descripcion_numeros.get(pred_numero, pred_numero)}")
-
-        #st.plotly_chart(px.bar(x=labels_tm, y=probs_tm, text_auto=True, title="Tiempo - Modo", labels={"x": "Etiqueta", "y": "Probabilidad"}), width=300, use_container_width=False)
-        #st.plotly_chart(px.bar(x=labels_p, y=probs_p, text_auto=True, title="Persona", labels={"x": "Etiqueta", "y": "Probabilidad"}), width=300, use_container_width=False)
-        #st.plotly_chart(px.bar(x=labels_n, y=probs_n, text_auto=True, title="Número", labels={"x": "Etiqueta", "y": "Probabilidad"}), width=300, use_container_width=False)
-
+        st.markdown(f"#### 🔹 Probabilidades de clasificación")
         col1, col2, col3 = st.columns(3)
         with col1:
             st.plotly_chart(
